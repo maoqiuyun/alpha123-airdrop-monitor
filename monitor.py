@@ -33,7 +33,6 @@ def today_items(data, now):
             timestamp = item.get('system_timestamp')
             included = not timestamp or dt.datetime.fromtimestamp(float(timestamp), TZ).date() == now.date()
         else:
-            print('Reading public airdrop data', flush=True)
             included = False
         if included:
             result.append(item)
@@ -117,11 +116,18 @@ def main():
         if args.fixture:
             data = json.loads(args.fixture.read_text())
         else:
+            print('Reading public airdrop data', flush=True)
             request = urllib.request.Request(URL, headers={
-                'User-Agent': 'Mozilla/5.0', 'Referer': 'https://alpha123.uk/zh/'})
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+                'Referer': 'https://alpha123.uk/zh/', 'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'})
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-            with opener.open(request, timeout=30) as response:
-                data = json.load(response)
+            try:
+                with opener.open(request, timeout=30) as response:
+                    data = json.load(response)
+            except urllib.error.HTTPError as error:
+                print(f'Public website response: HTTP {error.code}; server={error.headers.get("Server", "unknown")}', flush=True)
+                raise
         now = dt.datetime.now(TZ)
         items = today_items(data, now)
         print('Public data read successfully', flush=True)
