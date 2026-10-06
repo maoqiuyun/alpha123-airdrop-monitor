@@ -33,6 +33,7 @@ def today_items(data, now):
             timestamp = item.get('system_timestamp')
             included = not timestamp or dt.datetime.fromtimestamp(float(timestamp), TZ).date() == now.date()
         else:
+            print('Reading public airdrop data', flush=True)
             included = False
         if included:
             result.append(item)
@@ -123,8 +124,10 @@ def main():
                 data = json.load(response)
         now = dt.datetime.now(TZ)
         items = today_items(data, now)
+        print('Public data read successfully', flush=True)
         state_path = ROOT / 'state.json'
         cloud = bool(os.environ.get('GITHUB_ACTIONS'))
+        print('Reading notification state', flush=True)
         state = github_state() if cloud else (json.loads(state_path.read_text()) if state_path.exists() else {})
         seen = set(state.get('seen', [])) if state.get('date') == now.date().isoformat() else set()
         new_items = [item for item in items if key(item) not in seen]
@@ -138,6 +141,7 @@ def main():
         next_state = {'date': now.date().isoformat(), 'seen': sorted(seen)}
         if cloud:
             if next_state != state:
+                print('Saving notification state', flush=True)
                 github_state(next_state)
         else:
             temporary = state_path.with_suffix('.tmp')
@@ -150,5 +154,6 @@ if __name__ == '__main__':
         main()
     except Exception as error:
         # Do not print URLs/errors that can contain push credentials.
-        print(f'Monitor failed ({type(error).__name__}); check network and configured secrets.', file=sys.stderr)
+        status = f' HTTP {error.code}' if isinstance(error, urllib.error.HTTPError) else ''
+        print(f'Monitor failed ({type(error).__name__}){status}; check network and configured secrets.', file=sys.stderr)
         sys.exit(1)
