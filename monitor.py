@@ -107,7 +107,7 @@ def notify(items):
             raise ValueError('BARK_URL must be an HTTPS device push URL')
         endpoint = f'https://{parsed.netloc}/push'
         result = request_json(endpoint, {'device_key': device_key,
-            'title': 'Alpha123 今日空投', 'body': message, 'group': 'alpha123',
+            'title': '币安空投提醒', 'body': message, 'group': 'alpha123',
             'url': 'https://alpha123.uk/zh/'})
         if result.get('code') != 200:
             raise RuntimeError('Bark rejected notification')
@@ -118,7 +118,7 @@ def notify(items):
         if result.get('ok') is not True:
             raise RuntimeError('Telegram rejected notification')
     elif channel == 'mac':
-        subprocess.run(['/opt/homebrew/bin/terminal-notifier', '-title', 'Alpha123 空投提醒',
+        subprocess.run(['/opt/homebrew/bin/terminal-notifier', '-title', '币安空投提醒',
                         '-message', message, '-sound', 'Glass', '-open', 'https://alpha123.uk/zh/',
                         '-group', 'alpha123-today'], check=True, timeout=20)
     else:
@@ -131,6 +131,16 @@ def request_json(url, payload=None, headers=None, method=None):
         headers={'Content-Type': 'application/json', 'User-Agent': 'alpha123-monitor',
                  **(headers or {})}, method=method)
     with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def public_data():
+    request = urllib.request.Request(URL, headers={
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+        'Referer': 'https://alpha123.uk/zh/', 'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(request, timeout=30) as response:
         return json.load(response)
 
 
@@ -161,7 +171,12 @@ def main():
     parser.add_argument('--test-notification', action='store_true')
     args = parser.parse_args()
     if args.test_notification:
-        notify([{'token': '测试项目（模拟数据）'}])
+        items = today_items(public_data(), dt.datetime.now(TZ))
+        if not items:
+            raise ValueError('No current-day airdrops available for this test')
+        notify([{**item, '_notice': '测试通知（当前页面数据）'} for item in items])
+        print(json.dumps({'test_airdrops': [{'name': item.get('token') or item.get('name'),
+              'beijing_time': start_time(item).isoformat() if start_time(item) else None} for item in items]}, ensure_ascii=False))
         print('Test notification accepted by push service')
         return
     now = dt.datetime.now(TZ)
