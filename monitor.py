@@ -97,7 +97,11 @@ def notify(items):
         name = item.get('token') or item.get('name') or '新项目'
         stamp = start_time(item)
         time_text = stamp.strftime('%m月%d日 %H:%M（北京时间）') if stamp else '时间待公布'
-        lines.append(f'{item.get("_notice", "发现空投")}：{name}；空投时间：{time_text}')
+        points = item.get('points')
+        amount = item.get('amount')
+        points_text = str(points) if points is not None and str(points).strip() else '待公布'
+        amount_text = f'{amount} {name}' if amount is not None and str(amount).strip() else '待公布'
+        lines.append(f'{item.get("_notice", "发现空投")}：{name}；空投时间：{time_text}；积分：{points_text}；领取数量：{amount_text}')
     message = '\n'.join(lines)
     channel = os.environ.get('NOTIFY_CHANNEL', 'bark' if os.environ.get('GITHUB_ACTIONS') or os.environ.get('BARK_URL') else 'mac')
     if channel == 'bark':
@@ -176,7 +180,8 @@ def main():
             raise ValueError('No current-day airdrops available for this test')
         notify([{**item, '_notice': '测试通知（当前页面数据）'} for item in items])
         print(json.dumps({'test_airdrops': [{'name': item.get('token') or item.get('name'),
-              'beijing_time': start_time(item).isoformat() if start_time(item) else None} for item in items]}, ensure_ascii=False))
+              'beijing_time': start_time(item).isoformat() if start_time(item) else None,
+              'points': item.get('points'), 'amount': item.get('amount')} for item in items]}, ensure_ascii=False))
         print('Test notification accepted by push service')
         return
     now = dt.datetime.now(TZ)
