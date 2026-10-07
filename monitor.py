@@ -112,7 +112,7 @@ def notify(items):
         endpoint = f'https://{parsed.netloc}/push'
         result = request_json(endpoint, {'device_key': device_key,
             'title': '币安空投提醒', 'body': message, 'group': 'alpha123',
-            'level': 'timeSensitive', 'sound': 'glass',
+            'level': 'timeSensitive', 'sound': 'alarm',
             'url': 'https://alpha123.uk/zh/'})
         if result.get('code') != 200:
             raise RuntimeError('Bark rejected notification')
