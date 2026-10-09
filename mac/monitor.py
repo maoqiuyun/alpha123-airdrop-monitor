@@ -91,7 +91,7 @@ def key(item):
     return hashlib.sha256(json.dumps(fields, sort_keys=True).encode()).hexdigest()
 
 
-def notify(items):
+def notify(items, test_message=None):
     lines = []
     for item in items:
         name = item.get('token') or item.get('name') or '新项目'
@@ -102,7 +102,7 @@ def notify(items):
         points_text = str(points) if points is not None and str(points).strip() else '待公布'
         amount_text = f'{amount} {name}' if amount is not None and str(amount).strip() else '待公布'
         lines.append(f'{item.get("_notice", "发现空投")}：{name}；空投时间：{time_text}；积分：{points_text}；领取数量：{amount_text}')
-    message = '\n'.join(lines)
+    message = test_message if test_message is not None else '\n'.join(lines)
     channel = os.environ.get('NOTIFY_CHANNEL', 'bark' if os.environ.get('GITHUB_ACTIONS') or os.environ.get('BARK_URL') else 'mac')
     if channel == 'bark':
         parsed = urllib.parse.urlsplit(os.environ['BARK_URL'])
@@ -177,9 +177,10 @@ def main():
     args = parser.parse_args()
     if args.test_notification:
         items = today_items(public_data(), dt.datetime.now(TZ))
-        if not items:
-            raise ValueError('No current-day airdrops available for this test')
-        notify([{**item, '_notice': '测试通知（当前页面数据）'} for item in items])
+        if items:
+            notify([{**item, '_notice': '测试通知（当前页面数据）'} for item in items])
+        else:
+            notify([], test_message='测试通知：今天暂无空投；推送通道正常。')
         print(json.dumps({'test_airdrops': [{'name': item.get('token') or item.get('name'),
               'beijing_time': start_time(item).isoformat() if start_time(item) else None,
               'points': item.get('points'), 'amount': item.get('amount')} for item in items]}, ensure_ascii=False))
