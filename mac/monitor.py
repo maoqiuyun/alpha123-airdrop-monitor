@@ -111,7 +111,7 @@ def notify(items, test_message=None):
             raise ValueError('BARK_URL must be an HTTPS device push URL')
         endpoint = f'https://{parsed.netloc}/push'
         result = request_json(endpoint, {'device_key': device_key,
-            'title': '币安空投提醒', 'body': message, 'group': 'alpha123',
+            'title': '币安空投提醒 [Mac]', 'body': message, 'group': 'alpha123',
             'level': 'timeSensitive', 'sound': 'alarm',
             'url': 'https://alpha123.uk/zh/'})
         if result.get('code') != 200:
