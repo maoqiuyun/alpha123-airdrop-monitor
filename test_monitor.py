@@ -59,6 +59,7 @@ class MonitorTests(unittest.TestCase):
                 url, body = send.call_args.args
                 self.assertEqual(url, 'https://api.day.app/push')
                 self.assertEqual(body['device_key'], 'test-key')
+                self.assertEqual(body['title'], '币安空投提醒 [GitHub]')
 
     def test_notify_failure_does_not_mark_seen_and_success_deduplicates(self):
         with tempfile.TemporaryDirectory() as directory:
