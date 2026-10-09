@@ -104,7 +104,7 @@ def notify(items, test_message=None):
         lines.append(f'{item.get("_notice", "发现空投")}：{name}；空投时间：{time_text}；积分：{points_text}；领取数量：{amount_text}')
     message = test_message if test_message is not None else '\n'.join(lines)
     channel = os.environ.get('NOTIFY_CHANNEL', 'bark' if os.environ.get('GITHUB_ACTIONS') or os.environ.get('BARK_URL') else 'mac')
-    if channel == 'bark':
+    if channel in ('bark', 'both'):
         parsed = urllib.parse.urlsplit(os.environ['BARK_URL'])
         device_key = parsed.path.strip('/').split('/')[0]
         if parsed.scheme != 'https' or not parsed.netloc or not device_key:
@@ -116,17 +116,18 @@ def notify(items, test_message=None):
             'url': 'https://alpha123.uk/zh/'})
         if result.get('code') != 200:
             raise RuntimeError('Bark rejected notification')
-    elif channel == 'telegram':
+        print('Bark notification accepted', flush=True)
+    if channel == 'telegram':
         endpoint = f'https://api.telegram.org/bot{os.environ["TELEGRAM_BOT_TOKEN"]}/sendMessage'
         result = request_json(endpoint, {'chat_id': os.environ['TELEGRAM_CHAT_ID'],
                                        'text': message})
         if result.get('ok') is not True:
             raise RuntimeError('Telegram rejected notification')
-    elif channel == 'mac':
+    if channel in ('mac', 'both'):
         subprocess.run(['/opt/homebrew/bin/terminal-notifier', '-title', '币安空投提醒',
                         '-message', message, '-sound', 'Glass', '-open', 'https://alpha123.uk/zh/',
                         '-group', 'alpha123-today'], check=True, timeout=20)
-    else:
+    if channel not in ('bark', 'telegram', 'mac', 'both'):
         raise ValueError('Unknown notification channel')
 
 
@@ -175,6 +176,11 @@ def main():
     parser.add_argument('--fixture', type=Path)
     parser.add_argument('--test-notification', action='store_true')
     args = parser.parse_args()
+    if not os.environ.get('GITHUB_ACTIONS'):
+        bark_url_file = ROOT / '.bark_url'
+        if bark_url_file.exists():
+            os.environ.setdefault('BARK_URL', bark_url_file.read_text().strip())
+            os.environ.setdefault('NOTIFY_CHANNEL', 'both')
     if args.test_notification:
         items = today_items(public_data(), dt.datetime.now(TZ))
         if items:
