@@ -1,8 +1,8 @@
 name: Alpha123 airdrop monitor
 on:
   schedule:
-    # UTC 02:00-15:59 = Beijing 10:00-23:59.
-    - cron: "2-59/5 2-15 * * *"
+    # UTC Monday-Friday 02:00-15:59 = Beijing Monday-Friday 10:00-23:59.
+    - cron: "2-59/5 2-15 * * 1-5"
   workflow_dispatch:
     inputs:
       test_notification:
