@@ -16,3 +16,5 @@ python3 mac/monitor.py --test-notification
 ```
 
 Mac 通知需要在系统设置中允许 `terminal-notifier` 发送通知。脚本运行后生成的 `state.json`、`monitor.lock` 和日志仅保存在本机，不会提交到 GitHub。
+
+如果希望电脑发现空投时也推送到手机，请把 Bark 的 HTTPS 推送地址写入 `mac/.bark_url`，并执行 `chmod 600 mac/.bark_url`。本地监控会同时发送电脑和手机通知；云端 GitHub Actions 继续独立运行。不要把 `.bark_url` 提交到仓库。
