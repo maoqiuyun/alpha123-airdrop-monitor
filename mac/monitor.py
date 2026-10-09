@@ -186,6 +186,9 @@ def main():
         print('Test notification accepted by push service')
         return
     now = dt.datetime.now(TZ)
+    if now.weekday() >= 5 and not args.dry_run and not args.fixture:
+        print(json.dumps({'checked_at': now.isoformat(), 'skipped': 'weekend'}), flush=True)
+        return
     if now.hour < 10 and not args.dry_run and not args.fixture:
         print(json.dumps({'checked_at': now.isoformat(), 'skipped': 'quiet_hours'}), flush=True)
         return
